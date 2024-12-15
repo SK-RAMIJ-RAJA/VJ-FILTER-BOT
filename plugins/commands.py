@@ -1502,3 +1502,55 @@ async def purge_requests(client, message):
             parse_mode=enums.ParseMode.MARKDOWN,
             disable_web_page_preview=True
         )
+@Client.on_message(filters.command("setfs") & filters.user(ADMINS))
+async def set_force_sub_channel(client, message):
+    if len(message.command) > 1:
+        channel_id = message.command[1]
+        await save_group_settings(message.chat.id, "force_sub_channel", channel_id)
+        await message.reply(f"✅ ফোর্স সাবস্ক্রিপশন চ্যানেল সফলভাবে সেট করা হয়েছে: `{channel_id}`")
+    else:
+        await message.reply("⚠️ সঠিকভাবে চ্যানেল আইডি দিন। উদাহরণ: `/setfs -1001234567890`")
+
+@Client.on_message(filters.command("start"))
+async def check_force_sub(client, message):
+    settings = await get_settings(message.chat.id)
+    force_sub_channel = settings.get("force_sub_channel")
+    if force_sub_channel:
+        try:
+            user = await client.get_chat_member(force_sub_channel, message.from_user.id)
+            if user.status in ["member", "administrator", "creator"]:
+                await message.reply("✅ আপনি ফোর্স সাবস্ক্রিপশন চ্যানেলে যোগ দিয়েছেন। বট ব্যবহার করুন!")
+            else:
+                raise Exception("Not subscribed")
+        except:
+            invite_link = await client.create_chat_invite_link(int(force_sub_channel))
+            await message.reply(
+                f"⚠️ প্রথমে আমাদের চ্যানেলে যোগ দিন: [Join Now]({invite_link.invite_link})",
+                disable_web_page_preview=True,
+                parse_mode="markdown"
+            )
+    else:
+        await message.reply("⚠️ ফোর্স সাবস্ক্রিপশন চ্যানেল এখনো সেট করা হয়নি।")
+
+@Client.on_message(filters.command("setmoviegroup") & filters.user(ADMINS))
+async def set_movie_group(client, message):
+    if len(message.command) > 1:
+        group_id = message.command[1]
+        await save_group_settings(message.chat.id, "movie_group", group_id)
+        await message.reply(f"✅ মুভি গ্রুপ সফলভাবে সেট করা হয়েছে: `{group_id}`")
+    else:
+        await message.reply("⚠️ সঠিকভাবে গ্রুপ আইডি দিন। উদাহরণ: `/setmoviegroup -1009876543210`")
+
+@Client.on_message(filters.command("moviegroup"))
+async def get_movie_group(client, message):
+    settings = await get_settings(message.chat.id)
+    movie_group = settings.get("movie_group")
+    if movie_group:
+        invite_link = await client.create_chat_invite_link(int(movie_group))
+        await message.reply(
+            f"🎬 মুভি গ্রুপের লিঙ্ক: [Click Here]({invite_link.invite_link})",
+            disable_web_page_preview=True,
+            parse_mode="markdown"
+        )
+    else:
+        await message.reply("⚠️ মুভি গ্রুপ এখনো সেট করা হয়নি।")
